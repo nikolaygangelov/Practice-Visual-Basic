@@ -41,20 +41,20 @@ Sub CreateFolders()
   
 
     ' Setting folder names in month folder
-    folderNamesMonth(0) = "ÂÍÎÑ"
-    folderNamesMonth(1) = "ÈÇÍÎÑ"
-    folderNamesMonth(2) = "Êîðèãèðàùè"
+    folderNamesMonth(0) = "ВНОС"
+    folderNamesMonth(1) = "ИЗНОС"
+    folderNamesMonth(2) = "Коригиращи"
     
     ' Setting folder names in corrective folder
-    folderNamesCorrective(0) = "Êîðèãèðàùè âúòðåñúþçåí âíîñ 1"
-    folderNamesCorrective(1) = "Êîðèãèðàùè âúòðåñúþçåí èçíîñ 1"
+    folderNamesCorrective(0) = "Коригиращи вътресъюзен внос 1"
+    folderNamesCorrective(1) = "Коригиращи вътресъюзен износ 1"
     
     ' Loop through folder names and create each folder in month folder
     For Each folderNameMonth In folderNamesMonth
         If folderNameMonth <> "" Then
             If Not fso.FolderExists(destFolderPath & folderMonth & "\" & folderNameMonth) Then
                 fso.CreateFolder destFolderPath & folderMonth & "\" & folderNameMonth
-                If folderNameMonth = "Êîðèãèðàùè" Then
+                If folderNameMonth = "Коригиращи" Then
                 ' Loop through folder names and create each folder in corrective folder
                     For Each folderNameCorrective In folderNamesCorrective
                         If Not fso.FolderExists(destFolderPath & folderMonth & "\" & folderNameMonth & "\" & folderNameCorrective) Then
