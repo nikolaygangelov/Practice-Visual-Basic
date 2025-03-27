@@ -1,0 +1,74 @@
+Sub CreateFolders()
+'
+' Create Folders Macro
+'
+
+'
+    Dim destFolderPath As String
+    Dim folderMonth As String
+    Dim folderNamesMonth(3) As Variant
+    Dim folderNamesCorrective(2) As Variant
+    Dim folderNameMonth As Variant
+    Dim folderNameCorrective As Variant
+    Dim fso As Object
+
+    ' Prompt for destination of the folder which will be the new month
+    With Application.fileDialog(msoFileDialogFolderPicker)
+        .Title = "Select the destination folder for new month"
+        If .Show = -1 Then
+            destFolderPath = .SelectedItems(1) & "\"
+        Else
+            MsgBox "Operation cancelled.", vbExclamation
+            Exit Sub
+        End If
+    End With
+    
+    ' Prompt for folder month
+    folderMonth = InputBox("Enter folder name of the month", "Folder Month")
+
+    If folderMonth = "" Then
+        MsgBox "No folder name entered. Exiting...", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Create FileSystemObject
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    ' Create folder month
+    If Not fso.FolderExists(destFolderPath & folderMonth) Then
+        fso.CreateFolder destFolderPath & folderMonth
+    End If
+  
+
+    ' Setting folder names in month folder
+    folderNamesMonth(0) = "ÂÍÎÑ"
+    folderNamesMonth(1) = "ÈÇÍÎÑ"
+    folderNamesMonth(2) = "Êîðèãèðàùè"
+    
+    ' Setting folder names in corrective folder
+    folderNamesCorrective(0) = "Êîðèãèðàùè âúòðåñúþçåí âíîñ 1"
+    folderNamesCorrective(1) = "Êîðèãèðàùè âúòðåñúþçåí èçíîñ 1"
+    
+    ' Loop through folder names and create each folder in month folder
+    For Each folderNameMonth In folderNamesMonth
+        If folderNameMonth <> "" Then
+            If Not fso.FolderExists(destFolderPath & folderMonth & "\" & folderNameMonth) Then
+                fso.CreateFolder destFolderPath & folderMonth & "\" & folderNameMonth
+                If folderNameMonth = "Êîðèãèðàùè" Then
+                ' Loop through folder names and create each folder in corrective folder
+                    For Each folderNameCorrective In folderNamesCorrective
+                        If Not fso.FolderExists(destFolderPath & folderMonth & "\" & folderNameMonth & "\" & folderNameCorrective) Then
+                          fso.CreateFolder destFolderPath & folderMonth & "\" & folderNameMonth & "\" & folderNameCorrective
+                        End If
+                    Next folderNameCorrective
+                End If
+            End If
+        End If
+    Next folderNameMonth
+    
+    ' Cleanup
+    Set fso = Nothing
+
+    MsgBox "Folders created successfully!", vbInformation
+
+End Sub
