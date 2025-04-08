@@ -1,4 +1,4 @@
-Sub Cleaning_DTL_file()
+Sub Cleaning_DTL_and_RC_files()
 '
 ' Formatting and cleaning data in newly created folders Macro
 '
