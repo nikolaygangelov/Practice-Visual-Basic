@@ -1,0 +1,67 @@
+Sub Collection_file_formatting()
+'
+' New format for collection file Macro
+'
+
+'
+    Dim lastRow As Long
+    Dim awb As Workbook
+    Dim ws As Worksheet
+    
+    ' Insert new columns
+    Columns("A:E").Select
+    Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    Selection.ColumnWidth = 16.29
+    
+    ' Format cells
+    Cells.Select
+    With Selection.Font
+        .Name = "ARIAL"
+        .Size = 10
+        .Strikethrough = False
+        .Superscript = False
+        .Subscript = False
+        .OutlineFont = False
+        .Shadow = False
+        .ColorIndex = 1
+        .TintAndShade = 0
+        .ThemeFont = xlThemeFontNone
+    End With
+    
+    ' Set the active workbook (not PERSONAL.XLSB)
+    Set awb = ActiveWorkbook
+    
+    ' Set the first worksheet always
+    Set ws = awb.Sheets(1)
+    
+    ' Find the last row with data in column A
+    lastRow = ws.Cells(ws.Rows.Count, 6).End(xlUp).Row
+    
+    ' FreezePanes based on current selection
+    Selection.AutoFilter
+    Range("J2").Select
+    ActiveWindow.FreezePanes = True
+    
+    ' Sort column
+    ws.AutoFilter.Sort.SortFields.Clear
+    ws.AutoFilter.Sort.SortFields.Add2 Key:= _
+        Range("H1:H" & lastRow), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+        xlSortNormal
+    With ws.AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+    ' Scrol to right to end of data
+    ActiveWindow.SmallScroll ToRight:=47
+    Range("BE1").Select
+    
+    ' Set selected columns with format "Number"
+    With ws.Columns("G:I")
+    .NumberFormat = "0"
+    .Value = .Value
+    End With
+End Sub
