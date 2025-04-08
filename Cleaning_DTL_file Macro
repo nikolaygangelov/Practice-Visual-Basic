@@ -1,0 +1,184 @@
+Sub Cleaning_DTL_file()
+'
+' Formatting and cleaning data in newly created folders Macro
+'
+
+'
+    ' Executing Sub CreateFolders() to create folder where files to be copied
+    Call CreateFolders
+    
+    Dim folderPath As String
+    Dim destFolderPath As String
+    Dim wb As Workbook
+    Dim awb As Workbook
+    Dim ws As Worksheet, wsIntrastat As Worksheet
+    Dim lastRow As Long
+    Dim rng As Range
+    Dim fileName As String, newFileName As String
+    Dim lastFileNumber As Integer
+    Dim newWorksheetName As String
+    Dim targetSheet As Worksheet
+    Dim fileDialog As fileDialog
+    Dim selectedFiles As Variant
+    Dim selectedFile As Variant
+    Dim i As Integer
+    
+    ' Disable link update prompts and alerts
+    Application.AskToUpdateLinks = False
+    
+    ' Prompt the user to select the destination folder in which files will be copied
+        With Application.fileDialog(msoFileDialogFolderPicker)
+            .Title = "Select destination folder in which files will be copied"
+            If .Show = -1 Then
+                destinationFolder = .SelectedItems(1) & "\"
+            Else
+                MsgBox "No destination folder selected. Exiting..."
+                Exit Sub
+            End If
+        End With
+    
+    ' Prompt for selection files to be copied
+    Set fileDialog = Application.fileDialog(msoFileDialogFilePicker)
+    fileDialog.AllowMultiSelect = True
+    fileDialog.Title = "Select Excel files to be copied"
+    fileDialog.Filters.Add "Excel Files", "*.xls; *.xlsx"
+      
+    If fileDialog.Show = -1 Then
+        ' Loop through selected files
+        For Each selectedFile In fileDialog.SelectedItems
+            ' Open the selected file
+            Set wb = Workbooks.Open(selectedFile)
+            fileName = wb.Name
+            
+            ' Extract the previous number from the filename and generate new name
+            If Left(fileName, 3) = "DTL" Then
+                lastFileNumber = Val(Mid(fileName, 18, 1))
+                ' Create the new file name with incremented number
+                newFileName = destFolderPath & "DTL - Karnobat - " & lastFileNumber + 1 & ".xlsx"
+            Else
+                lastFileNumber = Val(Mid(fileName, 6, 1))
+                ' Create the new file name with incremented number
+                newFileName = destFolderPath & "RC - " & lastFileNumber + 1 & ".xlsx"
+            End If
+            
+            ' Set the active workbook (not PERSONAL.XLSB)
+            Set awb = ActiveWorkbook
+            
+            ' Step 0: Rename "Sheet1" to match file name (without extension)
+            newWorksheetName = Left(newFileName, InStrRev(newFileName, ".") - 1) ' Extract name before file extension
+            On Error Resume Next
+            ' Set the first worksheet always
+            Set ws = awb.Sheets(1)
+            ws.Name = newWorksheetName
+            On Error GoTo 0
+            
+            ws.Activate
+        
+            ' Find the last row with data in column A
+            lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+        
+            ' Step 1: Select the area from A2 to U(last row)
+            Set rng = ws.Range("A2:U" & lastRow)
+        
+            ' Step 2: Set font to Automatic (Default color)
+            rng.Font.ColorIndex = xlAutomatic
+        
+            ' Step 3: Delete all comments
+            On Error Resume Next
+            rng.ClearComments
+            On Error GoTo 0
+        
+            ' Step 4: Set No Fill color
+            rng.Interior.ColorIndex = xlNone
+            
+            Dim cell As Range
+            If Left(fileName, 2) = "RC" Then
+                ' Step 5: Clear contents (but keep formulas)
+                
+                For Each cell In rng
+                    If cell.Column <> 11 And cell.Column <> 14 Then ' Columns K,N
+                        cell.ClearContents
+                    End If
+                Next cell
+            
+                ' Step 6: Set Column K = Column J * 0.2
+                ws.Range("K2:K" & lastRow).Formula = "=J2*0.2"
+            
+                ' Step 7: Set Column Q = H + K + L - N + P
+                ws.Range("N2:N" & lastRow).Formula = "=H2+J2+K2-M2"
+            Else
+                ' Step 5: Clear contents (but keep formulas)
+                
+                For Each cell In rng
+                    If cell.Column <> 4 And cell.Column <> 5 And cell.Column <> 12 And cell.Column <> 17 Then ' Columns D,E,L,Q
+                        cell.ClearContents
+                    End If
+                Next cell
+            
+                ' Step 6: Set Column L = Column K * 0.2
+                ws.Range("L2:L" & lastRow).Formula = "=K2*0.2"
+            
+                ' Step 7: Set Column Q = H + K + L - N + P
+                ws.Range("Q2:Q" & lastRow).Formula = "=H2+K2+L2-N2+P2"
+            End If
+
+            ' Step 8: Select another sheet called "intrastat"
+            Set wsIntrastat = awb.Sheets("intrastat")
+            wsIntrastat.Activate
+        
+            ' Repeat Steps 1 to 5 but KEEP columns E & I
+            lastRow = wsIntrastat.Cells(wsIntrastat.Rows.Count, 1).End(xlUp).Row
+            Set rng = wsIntrastat.Range("A2:U" & lastRow)
+        
+            ' Font to Automatic
+            Dim col As Range
+            For Each col In rng.Columns
+                If col.Column <> 10 And col.Column <> 11 And col.Column <> 13 And col.Column <> 14 And col.Column <> 15 And col.Column <> 16 Then ' weight, statistical value and transport
+                    col.Font.ColorIndex = xlAutomatic
+                End If
+            Next col
+            
+            ' Delete all comments
+            On Error Resume Next
+            rng.ClearComments
+            On Error GoTo 0
+        
+            ' No Fill color
+            rng.Interior.ColorIndex = xlNone
+        
+            ' Clear contents (except for columns E & I)
+            For Each cell In rng
+                If cell.Column <> 5 And cell.Column <> 9 Then ' Column E = 5, Column I = 9
+                    If Not cell.HasFormula Then cell.ClearContents
+                End If
+            Next cell
+            
+            If Left(fileName, 3) = "DTL" Then
+                ' Set Column K = Column J / Column T
+                wsIntrastat.Range("K2:K" & lastRow).Formula = "=IFERROR(J2/T2,0)"
+            End If
+        
+            ' Set Column M = L2*1.95583
+            wsIntrastat.Range("M2:M" & lastRow).Formula = "=L2*1.95583"
+            
+            ' Set Column N = M2+O2
+            wsIntrastat.Range("N2:N" & lastRow).Formula = "=M2+O2"
+        
+            ' Step 9: Delete selection and shift cells up
+            rng.Delete Shift:=xlUp
+            
+            ' Save the file in the destination folder with the new name and close
+            wb.SaveAs destinationFolder & newFileName
+            wb.Close False
+        Next selectedFile
+        
+        MsgBox "Files successfully copied and renamed!", vbInformation, "Done"
+    Else
+        MsgBox "No files selected. Exiting..."
+    End If
+    
+    ' Cleanup
+    Set fileDialog = Nothing
+    Set wb = Nothing
+    
+End Sub
