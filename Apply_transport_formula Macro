@@ -1,0 +1,53 @@
+Sub Apply_transport_formula()
+'
+' Apply transport formula for couriers Macro
+'
+
+'
+    Dim lastRow As Long
+    Dim awb As Workbook
+    Dim ws As Worksheet
+    
+    ' Set the active workbook (not PERSONAL.XLSB)
+    Set awb = ActiveWorkbook
+    
+    ' Set the first worksheet always
+    Set ws = awb.Sheets(1)
+    
+    ' Find the last row with data in column A
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+    ' Apply formula for courier transport (adjusting string format)
+    ' for column I:
+    Range("I1:I" & lastRow).SpecialCells(xlCellTypeBlanks).Formula = _
+    "=FILTER('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!B:B & "" "" & " & _
+    "'I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!E:E, " & _
+    "(TEXT('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!A:A, ""0"") = " & _
+    "RIGHT(TEXTAFTER(CELL(""filename"", $A$1), ""]""), 1)) * " & _
+    "(RIGHT('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!G:G, 4) = TEXT(A2, ""0"")), ""-"")"
+    
+    ' for column J:
+    Range("J1:J" & lastRow).SpecialCells(xlCellTypeBlanks).Formula = _
+    "=FILTER('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!C:C, " & _
+    "(TEXT('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!A:A, ""0"") = " & _
+    "RIGHT(TEXTAFTER(CELL(""filename"", $A$1), ""]""), 1)) * " & _
+    "(RIGHT('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!G:G, 4) = TEXT(A2, ""0"")), ""-"")"
+    
+    ' for column K:
+    Range("K1:K" & lastRow).SpecialCells(xlCellTypeBlanks).Formula = _
+    "=FILTER('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!I:I, " & _
+    "(TEXT('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!A:A, ""0"") = " & _
+    "RIGHT(TEXTAFTER(CELL(""filename"", $A$1), ""]""), 1)) * " & _
+    "(RIGHT('I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\[FEDEX_DHL and trucks.xlsx]2025'!G:G, 4) = TEXT(A2, ""0"")), ""0"")"
+    
+    ' Break link in applied formulas
+    awb.BreakLink _
+    Name:="I:\FI - Finance\Taxes\INTRASTAT\Intrastat info\FEDEX_DHL and trucks.xlsx", _
+    Type:=xlLinkTypeExcelLinks
+    
+    ' Set selected columns with format "Number"
+    With ws.Range("K2:K" & lastRow)
+    .NumberFormat = "_-* # ##0.00_-;-* # ##0.00_-;_-* ""-""??_-;_-@_-"
+    End With
+    
+End Sub
