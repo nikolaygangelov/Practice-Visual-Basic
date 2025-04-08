@@ -1,0 +1,190 @@
+Sub Final_check_RC()
+'
+' Multiple checks before reporting data Macro
+'
+    Dim ws1 As Worksheet, ws2 As Worksheet
+    Dim lastRow1 As Long, lastRow2 As Long
+    Dim cell As Range
+    Dim valueRange As Range
+    Dim r As Long
+    Dim euMembers As Variant
+    Dim countriesCodes As Variant
+    Dim isTrue As Boolean
+    
+    isTrue = False
+
+    Set ws1 = ActiveWorkbook.Sheets(1)
+    Set ws2 = ActiveWorkbook.Sheets(2)
+    
+    lastRow1 = ws1.Cells(ws1.Rows.Count, "A").End(xlUp).Row
+    lastRow2 = ws2.Cells(ws2.Rows.Count, "A").End(xlUp).Row
+
+    ' --- SHEET 2 ---
+
+    ' 1. Check for gray background in A:U
+    For Each cell In ws2.Range("A1:U" & lastRow2)
+        If cell.Interior.Color = RGB(166, 166, 166) Then
+            isTrue = True
+        End If
+    Next cell
+    
+    If isTrue = True Then
+        MsgBox "There are cells in gray in Sheet 2", vbExclamation
+        isTrue = False
+        Exit Sub
+    End If
+
+    ' 2. Check for "-" or blanks in column O
+    For r = 2 To lastRow2
+        If ws2.Cells(r, "O").Value = "-" Or IsEmpty(ws2.Cells(r, "O")) Then
+            isTrue = True
+        End If
+    Next r
+    
+    If isTrue = True Then
+        MsgBox "Transport values are missing in column O", vbExclamation
+        isTrue = False
+        Exit Sub
+    End If
+
+    ' 3 & 4. Handle zeros in O and adjust F accordingly
+    For r = 2 To lastRow2
+        If ws2.Cells(r, "O").Value = 0 Then
+            ws2.Cells(r, "F").Value = "DAP"
+        ElseIf ws2.Cells(r, "F").Value = "DAP" And ws2.Cells(r, "O").Value <> 0 Then
+            ws2.Cells(r, "F").Value = "EXW"
+        End If
+    Next r
+
+    ' 5. Check for blanks in columns A to I
+    For r = 2 To lastRow2
+        If WorksheetFunction.CountBlank(ws2.Range("A" & r & ":I" & r)) > 0 Then
+            MsgBox "Missing values in columns A to I in Sheet 2", vbExclamation
+            Exit Sub
+        End If
+    Next r
+
+    ' 6. Check for zeros or blanks in columns J and L
+    For r = 2 To lastRow2
+        If ws2.Cells(r, "J").Value = 0 Or ws2.Cells(r, "L").Value = 0 Or IsEmpty(ws2.Cells(r, "J")) Or IsEmpty(ws2.Cells(r, "L")) Then
+            MsgBox "Incorrect values in columns J or L", vbExclamation
+            Exit Sub
+        End If
+    Next r
+
+    ' 7. Formulas for columns M, N
+
+    ws2.Range("M2:M" & lastRow2).Formula = "=L2*1.95583"
+
+    ws2.Range("N2:N" & lastRow2).Formula = "=M2+O2"
+    
+    ' 8. Set column I to "BGS"
+    ws2.Range("I2:I" & lastRow2).Value = "BGS"
+
+    ' 9. Check for country codes in H and D against GEONOM_2021.xlsx
+    countriesCodes = Array("AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AZ", "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ", "BR", _
+    "BS", "BT", "BV", "BW", "BY", "BZ", "CA", "CC", "CD", "CF", "CG", "CH", "CI", "CK", "CL", "CM", "CN", "CO", "CR", "CU", "CV", "CW", "CX", "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC", "EE", "EG", _
+    "EH", "ER", "ES", "ET", "FI", "FJ", "FK", "FM", "FO", "FR", "GA", "GB", "GD", "GE", "GH", "GI", "GL", "GM", "GN", "GQ", "GR", "GS", "GT", "GU", "GW", "GY", "HK", "HM", "HN", "HR", "HT", "HU", "ID", "IE", _
+    "IL", "IN", "IO", "IQ", "IR", "IS", "IT", "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR", "KW", "KY", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MD", _
+    "ÌÅ", "MG", "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MR", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NC", "NE", "NF", "NG", "NI", "NL", "NO", "NP", "NR", "NU", "NZ", "OM", "PA", "PE", "PF", _
+    "PG", "PH", "PK", "PL", "PM", "PN", "PS", "PT", "PW", "PY", "QA", "RO", "RU", "RW", "SA", "SB", "SC", "SD", "SE", "SG", "SH", "SI", "SK", "SL", "SM", "SN", "SO", "SR", "SS", "ST", "SV", "SX", "SY", "SZ", _
+    "TC", "TD", "TF", "TG", "TH", "TJ", "TK", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA", "UG", "UM", "US", "UY", "UZ", "VA", "VC", "VE", "VG", "VI", "VN", "VU", "WF", "WS", "XC", "XK", "XL", _
+    "XS", "YE", "ZA", "ZM", "ZW", "EU", "XI", "XU", "QP", "QQ", "QR", "QS", "QU", "QV", "QW", "QX", "QY", "QZ")
+    
+    ' Method "exist" works only with Object
+    Dim countryCodesDict As Object
+    Set countryCodesDict = CreateObject("Scripting.Dictionary")
+    
+    ' Filling countryCodesDict with country codes
+    For r = 0 To 251
+        countryCodesDict(countriesCodes(r)) = True
+    Next r
+
+    ' Check for country codes in D and H
+    For r = 2 To lastRow2
+        If Not countryCodesDict.exists(ws2.Cells(r, "D").Value) Then
+            MsgBox "Value in column D of Sheet2 not found in Country Codes", vbExclamation
+            Exit Sub
+        End If
+    Next r
+    
+    For r = 2 To lastRow2
+        If Not countryCodesDict.exists(ws2.Cells(r, "H").Value) Then
+            MsgBox "Value in column H of Sheet2 not found in Country Codes", vbExclamation
+            Exit Sub
+        End If
+    Next r
+    
+    ' 10. Check for valid EU country codes in column C
+    
+    ' Set a list of valid EU country codes
+    euMembers = Array("AT", "BE", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE")
+    
+    ' Method "exist" works only with Object
+    Dim countryCodesEUDict As Object
+    Set countryCodesEUDict = CreateObject("Scripting.Dictionary")
+    
+    ' Filling countryCodesDict with EU country codes
+    For r = 0 To 25
+        countryCodesEUDict(euMembers(r)) = True
+    Next r
+
+    ' Check for EU country codes in C
+    For r = 2 To lastRow2
+        If Not countryCodesEUDict.exists(ws2.Cells(r, "C").Value) Then
+            MsgBox "Value in column C of Sheet2 not found in EU Country Codes", vbExclamation
+            Exit Sub
+        End If
+    Next r
+
+    ' 11-13. Validate allowed values
+    For r = 2 To lastRow2
+        If ws2.Cells(r, "G").Value <> 3 And ws2.Cells(r, "G").Value <> 4 Then
+            MsgBox "Incorrect values in column G", vbExclamation
+            Exit Sub
+        End If
+        If ws2.Cells(r, "F").Value <> "EXW" And ws2.Cells(r, "F").Value <> "FCA" And ws2.Cells(r, "F").Value <> "DAP" Then
+            MsgBox "Incorrect incoterm in column F", vbExclamation
+            Exit Sub
+        End If
+        If ws2.Cells(r, "E").Value <> 11 And ws2.Cells(r, "E").Value <> 21 Then
+            MsgBox "Incorrect values in column E", vbExclamation
+            Exit Sub
+        End If
+    Next r
+
+    ' 14. Highlight if O - M > 0
+    For r = 2 To lastRow2
+        If ws2.Cells(r, "O").Value - ws2.Cells(r, "M").Value > 0 Then
+            ws2.Cells(r, "O").Interior.Color = RGB(166, 166, 166)
+            isTrue = True
+        End If
+    Next r
+    
+    If isTrue = True Then
+        MsgBox "Transport cost bigger than value", vbExclamation
+        isTrue = False
+    End If
+
+    ' 15. Check if column A values of sheet2 exist in column A of sheet1
+    Dim existsDict As Object
+    Set existsDict = CreateObject("Scripting.Dictionary")
+    For r = 2 To lastRow1
+        existsDict(ws1.Cells(r, "A").Value) = True
+    Next r
+
+    For r = 2 To lastRow2
+        If Not existsDict.exists(ws2.Cells(r, "A").Value) Then
+            MsgBox "Value in column A of Sheet2 not found in Sheet1", vbExclamation
+            Exit Sub
+        End If
+    Next r
+
+    ' 16. Ensure SUM formula covers full data range
+    ws2.Range("J" & lastRow2 + 2).Formula = "=SUM(J2:J" & lastRow2 & ")"
+    ws2.Range("M" & lastRow2 + 2).Formula = "=SUM(M2:M" & lastRow2 & ")"
+    ws2.Range("N" & lastRow2 + 2).Formula = "=SUM(N2:N" & lastRow2 & ")"
+
+    MsgBox "Final check complete!", vbInformation
+
+End Sub
