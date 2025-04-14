@@ -1,0 +1,49 @@
+Sub Transform()
+'
+' Recorded macro
+' Format file, process tariff numbers, convert to XLMS format
+'
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+
+    ' Set the first worksheet as the active sheet
+    Set ws = ActiveWorkbook.Sheets(1)
+    
+    ' Find the last row with data in column A
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+    ' Insert a new column C
+    ws.Columns("C:C").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+    ws.Cells(1, 3).Value = "Êîä ïî ÊÍ_"  ' Set header for the new column
+    ws.Columns("C:C").AutoFit  ' Adjust column width
+    
+    ' Bold the header row
+    ws.Range("A1:E1").Font.Bold = True
+    
+    ' Apply autofilter to the data
+    ws.Range("A1:E" & lastRow).AutoFilter
+    ws.Range("$A$1:$E$" & lastRow).AutoFilter Field:=4, Criteria1:="<>"
+
+    ' Apply formula for tariff code transformation (adjusting string format)
+    ws.Range("C7:C" & lastRow).FormulaR1C1 = "=MID(RC[-2],1,4)&MID(RC[-2],6,2)&MID(RC[-2],9,2)"
+
+    ' Convert formulas to values
+    ws.Columns("C:C").Value = ws.Columns("C:C").Value
+
+    ' Freeze the header row
+    ws.Rows("2:2").Select
+    ActiveWindow.FreezePanes = True
+
+    ' Apply another filter if needed (filtering column 5 for empty values)
+    ws.Range("$A$1:$E$" & lastRow).AutoFilter Field:=5, Criteria1:="="
+
+    ' Delete "Button 1" if it exists
+    Dim btn As Object
+    For Each btn In ws.Shapes
+        If btn.Name = "Button 1" Then btn.Delete
+    Next btn
+
+    ' Call function to convert file to XLSM format
+    Call ConvertToXLSM_WithDialog
+End Sub
