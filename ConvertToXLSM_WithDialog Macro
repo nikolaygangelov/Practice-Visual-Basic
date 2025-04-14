@@ -1,0 +1,24 @@
+Sub ConvertToXLSM_WithDialog()
+'
+'   Convert file in XLSM format
+'
+
+    Dim NewFilePath As String
+    Dim CurrentFilePath As String
+    Dim fileDialog As fileDialog
+    
+    ' Get the current file path
+    CurrentFilePath = ThisWorkbook.FullName
+    
+    ' Set the path name
+    PathName = Application.GetSaveAsFilename("INTRANS", fileFilter:="Excel Macro-Enabled Workbook (*.xlsm), *.xlsm")
+    If PathName <> False Then
+        ' Save as macro-enabled workbook
+        ThisWorkbook.SaveAs fileName:=PathName, FileFormat:=xlOpenXMLWorkbookMacroEnabled
+    ' Display message
+    MsgBox "Ôàéëúò áåøå çàïåìåòåí êàòî: " & PathName, vbInformation, "Êîíâåðòèðàíå çàâúðøåíî"
+    Else
+        MsgBox ("Ôàéëúò íå å ãåíèðèðàí, òúé êàòî íå áå èçáðàí ïúò çà çàïàçâàíåòî ìó.")
+    End If
+
+End Sub
